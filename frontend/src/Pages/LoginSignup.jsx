@@ -1,7 +1,9 @@
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const LoginSignup = () => {
+  const navigate = useNavigate()
   const [isLogin, setIsLogin] = useState(true)
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
@@ -9,25 +11,91 @@ const LoginSignup = () => {
   const [signupEmail, setSignupEmail] = useState('')
   const [signupPassword, setSignupPassword] = useState('')
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault()
-    console.log('Login:', { email: loginEmail, password: loginPassword })
-    setLoginEmail('')
-    setLoginPassword('')
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('http://localhost:4000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: loginEmail,
+          password: loginPassword,
+        }),
+      })
+
+      const data = await response.json()
+      console.log('Login response:', data)
+
+      if (data.success) {
+        localStorage.setItem('auth-token', data.token)
+        window.dispatchEvent(new Event('auth-change'))
+        alert('Login successful.')
+        setLoginEmail('')
+        setLoginPassword('')
+        navigate('/')
+      } else {
+        alert(data.errors || 'Login failed')
+      }
+    } catch (error) {
+      console.error('Login request failed:', error)
+      alert('Unable to login.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleSignupSubmit = (e) => {
+  const handleSignupSubmit = async (e) => {
     e.preventDefault()
+
     if (signupPassword !== signupConfirmPassword) {
       alert('Passwords do not match!')
       return
     }
-    console.log('Signup:', { name: signupName, email: signupEmail, password: signupPassword })
-    setSignupName('')
-    setSignupEmail('')
-    setSignupPassword('')
-    setSignupConfirmPassword('')
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('http://localhost:4000/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: signupName,
+          email: signupEmail,
+          password: signupPassword,
+        }),
+      })
+
+      const data = await response.json()
+      console.log('Signup response:', data)
+
+      if (data.success) {
+        localStorage.setItem('auth-token', data.token)
+        window.dispatchEvent(new Event('auth-change'))
+        alert('Account created successfully. Check browser console for response.')
+        setSignupName('')
+        setSignupEmail('')
+        setSignupPassword('')
+        setSignupConfirmPassword('')
+        setIsLogin(true)
+        navigate('/')
+      } else {
+        alert(data.errors || 'Signup failed')
+      }
+    } catch (error) {
+      console.error('Signup request failed:', error)
+      alert('Unable to create account. Check browser console for error.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -89,9 +157,10 @@ const LoginSignup = () => {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition mt-6"
                 >
-                  Login
+                  {isSubmitting ? 'Please wait...' : 'Login'}
                 </button>
               </form>
 
@@ -162,9 +231,10 @@ const LoginSignup = () => {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition mt-6"
                 >
-                  Create Account
+                  {isSubmitting ? 'Please wait...' : 'Create Account'}
                 </button>
               </form>
 

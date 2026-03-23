@@ -1,13 +1,34 @@
-import { useContext, useState } from "react"
-import { Link } from "react-router-dom"
+import { useContext, useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import cart from "../assets/cart_icon.png"
 import logo from "../assets/logo.png"
 import { ShopContext } from "../../Context/ShopContext"
 
 const Navbar = () => {
-
+  const navigate = useNavigate()
   const [menu, setMenu] = useState("shop")
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(localStorage.getItem('auth-token')))
   const{getTotalCartItems} =  useContext(ShopContext)
+
+  useEffect(() => {
+    const updateAuthState = () => {
+      setIsAuthenticated(Boolean(localStorage.getItem('auth-token')))
+    }
+
+    window.addEventListener('storage', updateAuthState)
+    window.addEventListener('auth-change', updateAuthState)
+
+    return () => {
+      window.removeEventListener('storage', updateAuthState)
+      window.removeEventListener('auth-change', updateAuthState)
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth-token')
+    window.dispatchEvent(new Event('auth-change'))
+    navigate('/')
+  }
 
   return (
     <div className="sticky top-0 bg-white shadow-md z-50 flex items-center justify-between px-12 py-4 bg-white shadow">
@@ -44,11 +65,11 @@ const Navbar = () => {
         </li>
 
         <li
-          onClick={() => setMenu("womens")}
+          onClick={() => setMenu("women")}
           className="cursor-pointer flex flex-col items-center hover:text-orange-500 transition"
         >
-          <Link to="/womens">Womens</Link>
-          {menu === "womens" && (
+          <Link to="/women">Women</Link>
+          {menu === "women" && (
             <hr className="w-full border-2 border-orange-500 rounded mt-1" />
           )}
         </li>
@@ -67,12 +88,15 @@ const Navbar = () => {
 
       {/* Login + Cart */}
       <div className="flex items-center gap-6">
-
-        <Link to="/login">
+          {isAuthenticated
+          ?<button onClick={handleLogout} className="px-6 py-2 border border-gray-400 rounded-full hover:bg-gray-100 transition">
+            Logout
+          </button>
+          :<Link to="/login">
           <button className="px-6 py-2 border border-gray-400 rounded-full hover:bg-gray-100 transition">
             Login
           </button>
-        </Link>
+        </Link>}
 
         <Link to="/cart" className="relative">
           <img src={cart} alt="cart" className="w-8 cursor-pointer" />
