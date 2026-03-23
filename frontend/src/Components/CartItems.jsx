@@ -11,6 +11,7 @@ const CartItems = () => {
         <p>Product</p>
         <p>Title</p>
         <p>Price</p>
+        <p>Size</p>
         <p>Quantity</p>
         <p>Total</p>
         <p className="text-center">Remove</p>
