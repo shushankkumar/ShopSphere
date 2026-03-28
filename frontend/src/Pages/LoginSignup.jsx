@@ -1,7 +1,9 @@
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const LoginSignup = () => {
+  const navigate = useNavigate()
   const [isLogin, setIsLogin] = useState(true)
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
@@ -33,9 +35,12 @@ const LoginSignup = () => {
 
       if (data.success) {
         localStorage.setItem('auth-token', data.token)
+        window.dispatchEvent(new Event('auth-change'))
         alert('Login successful.')
+
         setLoginEmail('')
         setLoginPassword('')
+        navigate('/')
       } else {
         alert(data.errors || 'Login failed')
       }
@@ -75,7 +80,7 @@ const LoginSignup = () => {
 
       if (data.success) {
         localStorage.setItem('auth-token', data.token)
-        alert('Account created successfully. Check browser console for response.')
+        alert('Account created successfully.')
         setSignupName('')
         setSignupEmail('')
         setSignupPassword('')
