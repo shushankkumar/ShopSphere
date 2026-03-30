@@ -1,7 +1,7 @@
 import React,{ createContext, useEffect, useState } from 'react';
 import all_product from "../src/assets/all_product";
 
-export const ShopContext = createContext(null);
+export const ShopContext = createContext(null); 
 
 const CART_STORAGE_KEY = 'shop-cart-items';
 
