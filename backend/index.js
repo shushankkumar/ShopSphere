@@ -10,13 +10,13 @@ const db = require("./config/dbConnect");
 const productRoutes = require("./routes/addproduct");
 const memoryUpload = require("./config/multerMemory.config");
 const uploadOnCloudinary = require("./config/cloudinaryConfig");
+const Product = require("./models/product");
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
-//database  connection mongodb
 
 
 //API creation
@@ -123,9 +123,6 @@ app.post('/signup', async (req,res)=>{
         return res.status(400).json({success:false,errors:"existing user found with same email address"})
     }
     let cart ={};
-    for(let i =0;i<300;i++){
-        cart[i] = 0;
-    }
     const user = new Users({
         name:req.body.username,
         email:req.body.email,
@@ -169,11 +166,104 @@ app.post('/login', async (req,res)=>{
 
 //creating endpoints for new collection data
 app.get('/newcollections', async (req,res)=>{
-    let products = await Product.find({});
-    let newcollection = products.slice(1).slice(-8);
-    console.log("New Collection Fetched"); 
-    res.send(newcollections); 
-} )
+    try {
+        const newcollection = await Product.find({})
+            .sort({ id: -1 })
+            .limit(8);
+
+        console.log("New Collection Fetched");
+        res.json(newcollection); 
+    } catch (error) {
+        console.error("Error fetching new collections:", error);
+        res.status(500).json({ success: false, message: "Failed to fetch new collections" });
+    }
+})
+
+//creating endpoints for popular in women section
+app.get('/popularinwomen', async (req,res)=>{ 
+    try {
+        const popular_in_women = await Product.find({ category: "women" })
+            .sort({ id: -1 })
+            .limit(4);
+
+        console.log("Popular in women Fetched");
+        res.json(popular_in_women);
+    } catch (error) {
+        console.error("Error fetching popular in women:", error);
+        res.status(500).json({ success: false, message: "Failed to fetch popular products" });
+    }
+})
+
+// creating middleware for fetch user
+    const fetchUser = async (req,res,next)=>{
+        const token = req.header('auth-token');
+    if(!token){
+            return res.status(401).send({error: "Please authenticate using validate token"})
+        }
+        else{
+            try{
+                const data = jwt.verify(token,'secret_ecom');
+                req.user = data.user;
+                next()
+            }catch(error){
+                return res.status(401).send({error: "Invalid auth token"})
+            }
+        }
+    }
+
+//creating endpoints for adding products in cartdata
+app.post('/addtocart',fetchUser, async (req,res)=>{
+    console.log("added", req.body.itemId, req.body.size);
+    let userData = await Users.findOne({_id:req.user.id});
+    const itemId = req.body.itemId;
+    const size = req.body.size;
+
+    if (!size) {
+        return res.status(400).json({ success: false, error: "Size is required" });
+    }
+
+    if (!userData.cartData[itemId] || typeof userData.cartData[itemId] !== 'object') {
+        userData.cartData[itemId] = {};
+    }
+
+    userData.cartData[itemId][size] = (userData.cartData[itemId][size] || 0) + 1;
+    await Users.findOneAndUpdate({_id:req.user.id},{cartData:userData.cartData});
+    res.json({ success: true, cartData: userData.cartData }) 
+})
+
+//creating endpoints for remove product from cartdata
+app.post('/removefromcart', fetchUser, async (req,res)=>{
+    console.log("removed", req.body.itemId, req.body.size);
+    let userData = await Users.findOne({_id:req.user.id});
+    const itemId = req.body.itemId;
+    const size = req.body.size;
+
+    if (!size) {
+        return res.status(400).json({ success: false, error: "Size is required" });
+    }
+
+    if (userData.cartData[itemId] && userData.cartData[itemId][size] > 0) {
+        userData.cartData[itemId][size] -= 1;
+
+        if (userData.cartData[itemId][size] <= 0) {
+            delete userData.cartData[itemId][size];
+        }
+
+        if (Object.keys(userData.cartData[itemId]).length === 0) {
+            delete userData.cartData[itemId];
+        }
+    }
+
+    await Users.findOneAndUpdate({_id:req.user.id},{cartData:userData.cartData});
+    res.json({ success: true, cartData: userData.cartData }) 
+})
+
+//creating endpoints to get cartdata
+app.post('/getcart', fetchUser, async (req,res)=>{
+    console.log("GetCart");
+    let userData = await Users.findOne({_id:req.user.id});
+    res.json(userData.cartData);
+})
 
 app.listen(port, (error) => {
     if (!error) {
@@ -183,8 +273,6 @@ app.listen(port, (error) => {
         console.log("Error : " + error)
     }
 });
-
-
 
 
 

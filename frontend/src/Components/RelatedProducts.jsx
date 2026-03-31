@@ -1,7 +1,14 @@
-import data_product from "../assets/data";
+import { useContext } from "react";
+import { ShopContext } from "../../Context/ShopContext";
+//import data_product from "../assets/data"
 import Item from "./Item";
 
-const RelatedProducts = () => {
+const RelatedProducts = ({ product }) => {
+  const { all_product } = useContext(ShopContext);
+  const relatedProducts = all_product
+    .filter((item) => item.category === product?.category && item.id !== product?.id)
+    .slice(0, 4);
+
   return (
     <div className="max-w-7xl mx-auto mt-16 px-6">
 
@@ -16,10 +23,10 @@ const RelatedProducts = () => {
 
       {/* Products Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-10">
-        {data_product.map((item, i) => {
+        {relatedProducts.map((item) => {
           return (
             <Item
-              key={i}
+              key={item.id}
               id={item.id}
               name={item.name}
               image={item.image}

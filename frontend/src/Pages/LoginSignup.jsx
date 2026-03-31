@@ -80,12 +80,14 @@ const LoginSignup = () => {
 
       if (data.success) {
         localStorage.setItem('auth-token', data.token)
+        window.dispatchEvent(new Event('auth-change'))
         alert('Account created successfully.')
         setSignupName('')
         setSignupEmail('')
         setSignupPassword('')
         setSignupConfirmPassword('')
         setIsLogin(true)
+        navigate('/')
       } else {
         alert(data.errors || 'Signup failed')
       }

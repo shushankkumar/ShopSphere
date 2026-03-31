@@ -1,80 +1,143 @@
-import React,{ createContext, useEffect, useState } from 'react';
-import all_product from "../src/assets/all_product";
+import React, { createContext, useEffect, useState } from 'react';
+//import all_product from "../src/assets/all_product";
 
-export const ShopContext = createContext(null); 
+export const ShopContext = createContext(null);
 
 const CART_STORAGE_KEY = 'shop-cart-items';
+const AUTH_TOKEN_KEY = 'auth-token';
 
 const getDefaultcart = () => {
   return {};
 };
 
-const ShopContextProvider = (props) =>{
-  const [cartItems,setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-
-    if (!savedCart) {
-      return getDefaultcart();
-    }
-
-    try {
-      return JSON.parse(savedCart);
-    } catch (error) {
-      console.error('Failed to parse cart data:', error);
-      return getDefaultcart();
-    }
-  });
+const ShopContextProvider = (props) => {
+  const [all_product, setAllProduct] = useState([]);
+  const [cartItems, setCartItems] = useState(getDefaultcart());
 
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const addToCart = (itemId, size) =>{
+  useEffect(() => {
+    fetch('http://localhost:4000/product/allproducts')
+      .then((response) => response.json())
+      .then((data) => setAllProduct(data))
+      .catch((error) => {
+        console.error('Failed to fetch products:', error);
+      });
+  }, []);
+
+  useEffect(() => {
+    const syncCartWithAuth = () => {
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+
+      if (!token) {
+        setCartItems(getDefaultcart());
+        localStorage.removeItem(CART_STORAGE_KEY);
+        return;
+      }
+
+      fetch('http://localhost:4000/getcart', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch cart');
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setCartItems(data || getDefaultcart());
+        })
+        .catch((error) => {
+          console.error('Failed to fetch cart data:', error);
+          setCartItems(getDefaultcart());
+        });
+    };
+
+    syncCartWithAuth();
+
+    window.addEventListener('auth-change', syncCartWithAuth);
+    window.addEventListener('storage', syncCartWithAuth);
+
+    return () => {
+      window.removeEventListener('auth-change', syncCartWithAuth);
+      window.removeEventListener('storage', syncCartWithAuth);
+    };
+  }, []);
+
+  const addToCart = (itemId, size) => {
     if (!size) {
       return;
     }
 
-    setCartItems((prev) => ({
-      ...prev,
-      [itemId]: {
-        ...(prev[itemId] || {}),
-        [size]: (prev[itemId]?.[size] || 0) + 1,
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+
+    if (!token) {
+      alert('Please login first to add items to cart.');
+      return;
+    }
+
+    fetch('http://localhost:4000/addtocart', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'auth-token': token,
+        'Content-Type': 'application/json',
       },
-    }));
-  }
-
-  const removeFromCart = (itemId, size) =>{
-    setCartItems((prev) => {
-      const currentItem = prev[itemId] || {};
-      const currentQuantity = currentItem[size] || 0;
-
-      if (currentQuantity <= 1) {
-        const updatedSizes = { ...currentItem };
-        delete updatedSizes[size];
-
-        if (Object.keys(updatedSizes).length === 0) {
-          const updatedCart = { ...prev };
-          delete updatedCart[itemId];
-          return updatedCart;
+      body: JSON.stringify({ itemId, size }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to add item to cart');
         }
-
-        return {
-          ...prev,
-          [itemId]: updatedSizes,
-        };
-      }
-
-      return {
-        ...prev,
-        [itemId]: {
-          ...currentItem,
-          [size]: currentQuantity - 1,
-        },
-      };
-    });
+        return response.json();
+      })
+      .then((data) => {
+        setCartItems(data.cartData || getDefaultcart());
+      })
+      .catch((error) => {
+        console.error('Failed to sync cart with server:', error);
+      });
   }
 
-  const getTotalCartAmount = ()=>{
+  const removeFromCart = (itemId, size) => {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+
+    if (!token) {
+      setCartItems(getDefaultcart());
+      return;
+    }
+
+    fetch('http://localhost:4000/removefromcart', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'auth-token': token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ itemId, size }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to remove item from cart');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setCartItems(data.cartData || getDefaultcart());
+      })
+      .catch((error) => {
+        console.error('Failed to sync cart removal with server:', error);
+      });
+  }
+
+  const getTotalCartAmount = () => {
     let totalAmount = 0;
 
     for (const itemId in cartItems) {
@@ -93,8 +156,8 @@ const ShopContextProvider = (props) =>{
     return totalAmount
   }
 
-  const getTotalCartItems = ()=>{
-    let totalItem=0;
+  const getTotalCartItems = () => {
+    let totalItem = 0;
 
     for (const itemId in cartItems) {
       const sizeMap = cartItems[itemId];
@@ -107,10 +170,10 @@ const ShopContextProvider = (props) =>{
     return totalItem
   }
 
-  const contextValue = { getTotalCartItems,getTotalCartAmount,all_product,cartItems,addToCart,removeFromCart};
+  const contextValue = { getTotalCartItems, getTotalCartAmount, all_product, cartItems, addToCart, removeFromCart };
 
   return (
-    <ShopContext.Provider value={contextValue}> 
+    <ShopContext.Provider value={contextValue}>
       {props.children}
     </ShopContext.Provider>
   )
