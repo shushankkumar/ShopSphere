@@ -23,6 +23,12 @@ const AddProduct = () => {
 
 
   const Add_Product = async () => {
+      const adminToken = localStorage.getItem('admin-auth-token');
+
+      if (!adminToken) {
+        alert("Admin login required");
+        return;
+      }
  
       let responseData;
       let formData = new FormData();
@@ -34,6 +40,7 @@ const AddProduct = () => {
           method: 'POST',
           headers: {
             Accept: 'application/json',
+            'admin-auth-token': adminToken,
           },
           body: formData,
         });
@@ -55,6 +62,7 @@ const AddProduct = () => {
             method: 'POST',
             headers: {
               Accept: 'application/json',
+              'admin-auth-token': adminToken,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(product),

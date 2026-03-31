@@ -2,6 +2,7 @@ import React from 'react'
 import { NavLink } from 'react-router-dom'
 import add_product_icon from '../assets/Product_Cart.svg'
 import list_product_icon from '../assets/Product_list_icon.svg'
+import navProfile from '../assets/nav-profile.svg'
 
 const Sidebar = () => {
   const navItemClass = ({ isActive }) =>
@@ -30,6 +31,14 @@ const Sidebar = () => {
             <div>
               <p className="text-sm font-semibold">Product List</p>
               <p className="text-xs text-slate-500">View and remove products</p>
+            </div>
+          </NavLink>
+
+          <NavLink to="/admins" className={navItemClass}>
+            <img src={navProfile} alt="" className="h-8 w-8 rounded-full object-cover" />
+            <div>
+              <p className="text-sm font-semibold">Manage Admins</p>
+              <p className="text-xs text-slate-500">Create and remove admin accounts</p>
             </div>
           </NavLink>
         </div>

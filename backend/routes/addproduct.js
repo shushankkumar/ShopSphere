@@ -1,9 +1,10 @@
 const productModel = require("../models/product");
 const express = require('express')
+const { fetchAdmin } = require("../middleware/adminAuth");
 const router = express.Router();
 
 
-router.post('/add-product', async (req,res)=>{
+router.post('/add-product', fetchAdmin, async (req,res)=>{
     console.log(req.body)
     let products = await productModel.find();
     let id = 0
@@ -34,10 +35,10 @@ router.post('/add-product', async (req,res)=>{
 
 
 // Creating API for deleting products
- router.post('/removeproduct', async (req,res)=>{
+ router.post('/removeproduct', fetchAdmin, async (req,res)=>{
     await productModel.findOneAndDelete({id:req.body.id});
-    console.log(Removed);
-    res.console({
+    console.log("Removed");
+    res.json({
         success:true,
         name:req.body.name,
     })

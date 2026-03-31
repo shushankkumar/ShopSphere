@@ -18,10 +18,12 @@ const ListProduct = () => {
   },[])
 
   const remove_product = async (id)=>{
+  const adminToken = localStorage.getItem('admin-auth-token')
   await fetch('http://localhost:4000/product/removeproduct',{
     method:'POST',
     headers:{
       'Accept':'application/json',
+      'admin-auth-token': adminToken,
       'Content-Type': 'application/json',
     },
     body:JSON.stringify({id:id})

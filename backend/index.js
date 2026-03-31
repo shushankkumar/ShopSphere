@@ -8,9 +8,11 @@ const cors = require("cors");
 require("dotenv").config();
 const db = require("./config/dbConnect");
 const productRoutes = require("./routes/addproduct");
+const adminRoutes = require("./routes/admin");
 const memoryUpload = require("./config/multerMemory.config");
 const uploadOnCloudinary = require("./config/cloudinaryConfig");
 const Product = require("./models/product");
+const { fetchAdmin } = require("./middleware/adminAuth");
 
 const app = express();
 
@@ -25,6 +27,7 @@ app.get("/", (req, res) => {
 });
 
 app.use('/product', productRoutes)
+app.use('/admin', adminRoutes)
 
  
       
@@ -41,7 +44,7 @@ app.use('/product', productRoutes)
 // const upload = multer({storage:storage})
 
 // Product images upload route
-app.post('/upload-image', memoryUpload.single('product'), async (req, res) => {
+app.post('/upload-image', fetchAdmin, memoryUpload.single('product'), async (req, res) => {
     try {
         const image = req.file;
         // const imageUploadedSuccessfully = await images.map(async(image)=>{
@@ -273,7 +276,6 @@ app.listen(port, (error) => {
         console.log("Error : " + error)
     }
 });
-
 
 
 
