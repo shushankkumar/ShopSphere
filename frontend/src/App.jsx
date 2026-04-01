@@ -10,6 +10,7 @@ import ShopCategory from './Pages/ShopCategory'
 import kids_banner from './assets/banner_kids.png'
 import men_banner from './assets/banner_mens.png'
 import women_banner from './assets/banner_women.png'
+import Checkout from './Pages/Checkout'
 
 function App() {
 
@@ -30,6 +31,7 @@ function App() {
           <Route path='/collection' element={<ShopCategory category="collection" />} />
 
           <Route path='/cart' element={<Cart />} />
+          <Route path='/checkout' element={<Checkout />} />
           <Route path='/login' element={<LoginSignup />} />
         </Routes>
 
