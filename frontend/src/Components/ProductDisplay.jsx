@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import star_dull_icon from "../assets/star_dull_icon.png";
 import star_icon from "../assets/star_icon.png";
 import { ShopContext } from "../../Context/ShopContext";
@@ -8,6 +8,7 @@ const ProductDisplay = ({ product }) => {
   if (!product) return null;
 
   const{addToCart} = useContext(ShopContext);
+  const [selectedSize, setSelectedSize] = useState("M");
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
@@ -87,7 +88,13 @@ const ProductDisplay = ({ product }) => {
               {["S","M","L","XL","XXL"].map((size) => (
                 <button
                   key={size}
-                  className="border px-5 py-2 rounded-lg hover:bg-black hover:text-white transition"
+                  type="button"
+                  onClick={() => setSelectedSize(size)}
+                  className={`border px-5 py-2 rounded-lg transition ${
+                    selectedSize === size
+                      ? "bg-black text-white border-black"
+                      : "hover:bg-black hover:text-white"
+                  }`}
                 >
                   {size}
                 </button>
@@ -96,7 +103,7 @@ const ProductDisplay = ({ product }) => {
           </div>
 
           {/* add to cart */}
-          <button onClick={()=>{addToCart(product.id)}} className="mt-4 bg-black text-white px-8 py-3 rounded-lg w-fit hover:bg-gray-800 transition">
+          <button onClick={()=>{addToCart(product.id, selectedSize)}} className="mt-4 bg-black text-white px-8 py-3 rounded-lg w-fit hover:bg-gray-800 transition">
             ADD TO CART
           </button>
 

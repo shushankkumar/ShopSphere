@@ -3,6 +3,7 @@ import './App.css'
 import Footer from './Components/Footer'
 import Navbar from './Components/Navbar'
 import Cart from './Pages/Cart'
+import Checkout from './Pages/Checkout'
 import LoginSignup from './Pages/LoginSignup'
 import Product from './Pages/Product'
 import Shop from './Pages/Shop'
@@ -30,6 +31,7 @@ function App() {
           <Route path='/collection' element={<ShopCategory category="collection" />} />
 
           <Route path='/cart' element={<Cart />} />
+          <Route path='/checkout' element={<Checkout />} />
           <Route path='/login' element={<LoginSignup />} />
         </Routes>
 
