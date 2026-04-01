@@ -1,11 +1,15 @@
 import { useContext, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ShopContext } from "../../Context/ShopContext";
 
+
 const Checkout = () => {
-  const { getTotalCartAmount } = useContext(ShopContext);
+  const navigate = useNavigate();
+  const { getTotalCartAmount, clearCart } = useContext(ShopContext);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("online");
   const [isAddressConfirmed, setIsAddressConfirmed] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [address, setAddress] = useState({
     name: "Saurabh Kumar",
     phone: "+91 98765 43210",
@@ -19,6 +23,57 @@ const Checkout = () => {
   const totalAmount = useMemo(() => getTotalCartAmount(), [getTotalCartAmount]);
 
   const fullAddress = `${address.line1}, ${address.line2}, ${address.city}, ${address.state} - ${address.pincode}`;
+
+  const handlePlaceOrder = async () => {
+    const token = localStorage.getItem('auth-token');
+
+    if (!token) {
+      alert('Please login first to place your order.');
+      navigate('/login');
+      return;
+    }
+
+    if (totalAmount <= 0) {
+      alert('Your cart is empty.');
+      return;
+    }
+
+    if (paymentMethod === 'online') {
+      // alert('Online payment will be handled by your payment integration. Order will be placed only after successful online payment.');
+      navigate(`/payment/${totalAmount}`)
+      // return;
+    }
+
+    setIsPlacingOrder(true);
+
+    try {
+      const response = await fetch('http://localhost:4000/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'auth-token': token,
+        },
+        body: JSON.stringify({
+          address,
+          paymentMethod,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to place order');
+      }
+
+      clearCart();
+      navigate(`/order-success/${data.orderId}`);
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      alert(error.message || 'Unable to place order');
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -171,9 +226,13 @@ const Checkout = () => {
 
           <button
             type="button"
+            onClick={handlePlaceOrder}
+            disabled={isPlacingOrder}
             className="mt-6 w-full rounded-2xl bg-orange-500 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-orange-600"
           >
-            Place Order ({paymentMethod === "online" ? "Pay Online" : "COD"})
+            {isPlacingOrder
+              ? 'Placing Order...'
+              : `Place Order (${paymentMethod === "online" ? "Pay Online" : "COD"})`}
           </button>
         </div>
       </div>

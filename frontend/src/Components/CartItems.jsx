@@ -1,8 +1,10 @@
 import React, { useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ShopContext } from '../../Context/ShopContext'
 import remove_icon from '../assets/cart_cross_icon.png'
 
 const CartItems = () => {
+  const navigate = useNavigate()
   const { getTotalCartAmount, all_product, cartItems, removeFromCart } = useContext(ShopContext)
   const cartEntries = []
 
@@ -19,6 +21,15 @@ const CartItems = () => {
       }
     })
   })
+
+  const handleCheckout = () => {
+    if (cartEntries.length === 0) {
+      alert('Your cart is empty.')
+      return
+    }
+
+    navigate('/checkout')
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-8">
@@ -106,7 +117,11 @@ const CartItems = () => {
               <h3>Rs {getTotalCartAmount()}</h3>
             </div>
           </div>
-          <button className="mt-6 w-full rounded-2xl bg-orange-500 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-orange-600">
+          <button
+            type="button"
+            onClick={handleCheckout}
+            className="mt-6 w-full rounded-2xl bg-orange-500 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-orange-600"
+          >
             Proceed To Checkout
           </button>
         </div>

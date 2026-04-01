@@ -84,6 +84,18 @@ const Navbar = () => {
           )}
         </li>
 
+        {isAuthenticated && (
+          <li
+            onClick={() => setMenu("orders")}
+            className="cursor-pointer flex flex-col items-center hover:text-orange-500 transition"
+          >
+            <Link to="/orders">Orders</Link>
+            {menu === "orders" && (
+              <hr className="w-full border-2 border-orange-500 rounded mt-1" />
+            )}
+          </li>
+        )}
+
       </ul>
 
       {/* Login + Cart */}

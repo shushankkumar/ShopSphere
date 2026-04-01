@@ -11,6 +11,10 @@ import kids_banner from './assets/banner_kids.png'
 import men_banner from './assets/banner_mens.png'
 import women_banner from './assets/banner_women.png'
 import Checkout from './Pages/Checkout'
+import MyOrders from './Pages/MyOrders'
+import OrderSuccess from './Pages/OrderSuccess'
+import { Payment } from './Pages/Payment'
+
 
 function App() {
 
@@ -32,6 +36,9 @@ function App() {
 
           <Route path='/cart' element={<Cart />} />
           <Route path='/checkout' element={<Checkout />} />
+          <Route path='/payment/:amount' element={<Payment />} />
+          <Route path='/orders' element={<MyOrders />} />
+          <Route path='/order-success/:orderId' element={<OrderSuccess />} />
           <Route path='/login' element={<LoginSignup />} />
         </Routes>
 

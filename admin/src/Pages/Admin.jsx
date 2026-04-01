@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminManagement from '../Components/AdminManagement'
 import AddProduct from '../Components/AddProduct'
 import ListProduct from '../Components/ListProduct'
+import OrderManagement from '../Components/OrderManagement'
 
 const Admin = () => {
   return (
@@ -16,6 +17,7 @@ const Admin = () => {
             <Route path="/" element={<Navigate to="/addProduct" replace />} />
             <Route path="/addProduct" element={<AddProduct />} />
             <Route path="/listProduct" element={<ListProduct />} />
+            <Route path="/orders" element={<OrderManagement />} />
             <Route path="/admins" element={<AdminManagement />} />
           </Routes>
         </main>

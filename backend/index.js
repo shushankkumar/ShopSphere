@@ -9,9 +9,11 @@ require("dotenv").config();
 const db = require("./config/dbConnect");
 const productRoutes = require("./routes/addproduct");
 const adminRoutes = require("./routes/admin");
+const paymentRoutes = require('./routes/payment')
 const memoryUpload = require("./config/multerMemory.config");
 const uploadOnCloudinary = require("./config/cloudinaryConfig");
 const Product = require("./models/product");
+const Order = require("./models/order");
 const { fetchAdmin } = require("./middleware/adminAuth");
 
 const app = express();
@@ -28,6 +30,7 @@ app.get("/", (req, res) => {
 
 app.use('/product', productRoutes)
 app.use('/admin', adminRoutes)
+app.use('/payment', paymentRoutes)
 
  
       
@@ -268,6 +271,133 @@ app.post('/getcart', fetchUser, async (req,res)=>{
     res.json(userData.cartData);
 })
 
+// creating checkout endpoint
+app.post('/checkout', fetchUser, async (req, res) => {
+    try {
+        const { address, paymentMethod } = req.body;
+        const userData = await Users.findOne({ _id: req.user.id });
+
+        if (!address || !paymentMethod) {
+            return res.status(400).json({ success: false, error: "Address and payment method are required" });
+        }
+
+        const cartData = userData.cartData || {};
+        const orderItems = [];
+        let totalAmount = 0;
+
+        for (const itemId in cartData) {
+            const product = await Product.findOne({ id: Number(itemId) });
+            const sizeMap = cartData[itemId];
+
+            if (!product || !sizeMap) {
+                continue;
+            }
+
+            for (const size in sizeMap) {
+                const quantity = sizeMap[size];
+
+                if (quantity > 0) {
+                    orderItems.push({
+                        itemId: product.id,
+                        name: product.name,
+                        image: product.image,
+                        size,
+                        quantity,
+                        price: product.new_price,
+                    });
+
+                    totalAmount += quantity * product.new_price;
+                }
+            }
+        }
+
+        if (orderItems.length === 0) {
+            return res.status(400).json({ success: false, error: "Cart is empty" });
+        }
+
+        const order = await Order.create({
+            userId: req.user.id,
+            items: orderItems,
+            address,
+            paymentMethod,
+            paymentStatus: paymentMethod === "online" ? "paid" : "pending",
+            totalAmount,
+        });
+
+        userData.cartData = {};
+        await Users.findOneAndUpdate({ _id: req.user.id }, { cartData: userData.cartData });
+
+        return res.json({
+            success: true,
+            orderId: order._id,
+            totalAmount,
+            cartData: {},
+            message: "Order placed successfully",
+        });
+    } catch (error) {
+        console.error("Checkout error:", error);
+        return res.status(500).json({ success: false, error: "Failed to place order" });
+    }
+})
+
+// get user order history
+app.get('/orders/my', fetchUser, async (req, res) => {
+    try {
+        const orders = await Order.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        return res.json({ success: true, orders });
+    } catch (error) {
+        console.error("Fetch user orders error:", error);
+        return res.status(500).json({ success: false, error: "Failed to fetch user orders" });
+    }
+})
+
+// get all orders for admin
+app.get('/admin/orders', fetchAdmin, async (req, res) => {
+    try {
+        const orders = await Order.find({}).sort({ createdAt: -1 });
+        return res.json({ success: true, orders });
+    } catch (error) {
+        console.error("Fetch admin orders error:", error);
+        return res.status(500).json({ success: false, error: "Failed to fetch orders" });
+    }
+})
+
+// update order/payment status by admin
+app.post('/admin/orders/update-status', fetchAdmin, async (req, res) => {
+    try {
+        const { orderId, status, paymentStatus } = req.body;
+
+        if (!orderId) {
+            return res.status(400).json({ success: false, error: "Order id is required" });
+        }
+
+        const updateFields = {};
+
+        if (status) {
+            updateFields.status = status;
+        }
+
+        if (paymentStatus) {
+            updateFields.paymentStatus = paymentStatus;
+        }
+
+        const updatedOrder = await Order.findByIdAndUpdate(
+            orderId,
+            updateFields,
+            { new: true }
+        );
+
+        if (!updatedOrder) {
+            return res.status(404).json({ success: false, error: "Order not found" });
+        }
+
+        return res.json({ success: true, order: updatedOrder });
+    } catch (error) {
+        console.error("Update order status error:", error);
+        return res.status(500).json({ success: false, error: "Failed to update order" });
+    }
+})
+
 app.listen(port, (error) => {
     if (!error) {
         console.log("Server is Running : " + port)
@@ -276,7 +406,5 @@ app.listen(port, (error) => {
         console.log("Error : " + error)
     }
 });
-
-
 
 

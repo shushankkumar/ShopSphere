@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import add_product_icon from '../assets/Product_Cart.svg'
 import list_product_icon from '../assets/Product_list_icon.svg'
 import navProfile from '../assets/nav-profile.svg'
+import cart_icon from '../assets/cart_icon.png'
 
 const Sidebar = () => {
   const navItemClass = ({ isActive }) =>
@@ -31,6 +32,14 @@ const Sidebar = () => {
             <div>
               <p className="text-sm font-semibold">Product List</p>
               <p className="text-xs text-slate-500">View and remove products</p>
+            </div>
+          </NavLink>
+
+          <NavLink to="/orders" className={navItemClass}>
+            <img src={cart_icon} alt="" className="h-8 w-8" />
+            <div>
+              <p className="text-sm font-semibold">Orders</p>
+              <p className="text-xs text-slate-500">Track and update customer orders</p>
             </div>
           </NavLink>
 
