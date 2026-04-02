@@ -41,7 +41,7 @@ const Checkout = () => {
     if (paymentMethod === 'online') {
       // alert('Online payment will be handled by your payment integration. Order will be placed only after successful online payment.');
       navigate(`/payment/${totalAmount}`)
-      // return;
+      // return; 
     }
 
     setIsPlacingOrder(true);
